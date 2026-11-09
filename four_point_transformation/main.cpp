@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 
-#include "../stb_image.h"
+#include "../util/stb_image.h"
 
 // compile using g++
 
@@ -17,45 +17,9 @@ data[6] is the third pixel's R value.
 */
 #include <iostream>
 #include <string>
+#include "../util/rgb.h"
 // #include <SFML/Graphics.hpp>
 // #include <GL/glfw.h>
-
-struct RGB {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-
-    RGB(unsigned char red, unsigned char green, unsigned char blue) : r(red), g(green), b(blue) {}
-};
-
-struct Image {
-    int width;
-    int height;
-    int channels;
-    unsigned char *pixels;
-
-    RGB getPixelRgb(int x, int y) {
-        int baseIndex = (y * width + x) * channels;
-
-        return RGB(pixels[baseIndex], pixels[baseIndex + 1], pixels[baseIndex + 2]);
-    }
-
-     bool setPixelRgb(int x, int y, RGB color) {
-        // add safety checks for different channels
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return false;
-        }
-
-        int baseIndex = (y * width + x) * channels;
-        pixels[baseIndex] = color.r;
-        pixels[baseIndex + 1] = color.g;
-        pixels[baseIndex + 2] = color.b;
-        if (channels == 4) {
-            pixels[baseIndex + 3] = 255; // Default fully opaque
-        }
-        return true;
-    }
-};
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -80,7 +44,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << (int)data[0] << "\n";
+    // std::cout << (int)data[0] << "\n";
 
     std::cout << "Dimensions: " << image.width << " x " << image.height << " pixels\n";
     std::cout << "Channels  : " << image.channels << " (";
