@@ -1,9 +1,19 @@
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
+#include <iostream>
+#include <string>
+#include <vector>
+#include "memory"
 #include "../util/stb_image.h"
+#include "../util/stb_image_write.h"
+#include "../util/image_t.h"
+#include "../util/grayscale.h"
+// #include <../SFML/Graphics.hpp>
 
 // compile using g++
 
+// ** A c++ program that loads image and then saves it
 
 /*
 data[0] is the first pixel's R value.
@@ -15,10 +25,8 @@ data[5] is the second pixel's B value.
 data[6] is the third pixel's R value.
 
 */
-#include <iostream>
-#include <string>
-#include "../util/rgb.h"
-// #include <SFML/Graphics.hpp>
+
+
 // #include <GL/glfw.h>
 
 int main(int argc, char** argv) {
@@ -36,13 +44,14 @@ int main(int argc, char** argv) {
     // Load the image (0 means auto-detect original channel count)
     unsigned char* data = stbi_load(image_path, &image.width, &image.height, &image.channels, 0);
     image.pixels = data;
-
     if (!data) {
         std::cerr << "Failed to load image!\n";
         std::cerr << "Reason: " << stbi_failure_reason() << "\n";
         std::cerr << "Please double-check that the file path is correct and the image is not corrupted.\n";
         return 1;
     }
+
+    stbi_write_png("output.png", image.width, image.height, image.channels, image.pixels, image.width * image.channels);
 
     // std::cout << (int)data[0] << "\n";
 
@@ -54,6 +63,20 @@ int main(int argc, char** argv) {
     else std::cout << "Unknown";
     std::cout << ")\n";
     std::cout << "Memory Size: " << (image.width * image.height * image.channels) << " bytes\n";
+
+    std::cout << "\nattempting to convert image into grayscale\n";
+    std::cout << "image channel" << image.channels << "\n";
+    Image grayscale_image;
+    grayscale_image.width = image.width;
+    grayscale_image.height = image.height;
+    grayscale_image.channels = 1;
+    auto pixelBuffer = std::make_unique<uint8_t[]>(image.width * image.height);
+    uint8_t* rawPointer = pixelBuffer.get();
+    grayscale_image.pixels = rawPointer;
+    Rgb2Grayscale(image, grayscale_image);
+
+    std::cout << "saving the grayscale image\n";
+    stbi_write_png("output_grayscale.png", grayscale_image.width, grayscale_image.height, grayscale_image.channels, grayscale_image.pixels, grayscale_image.width * grayscale_image.channels);
 
 
     stbi_image_free(data);
