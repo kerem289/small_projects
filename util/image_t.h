@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdint>
+#include "memory"
 #pragma once
 
 struct Grayscale {
@@ -38,7 +39,7 @@ struct Image {
     int width;
     int height;
     int channels;
-    unsigned char *pixels;
+    std::unique_ptr<uint8_t[]> pixels; // must use get function to get the pointer
 
     ColorType getPixelRgb(int x, int y) {
         int baseIndex = (y * width + x) * channels;

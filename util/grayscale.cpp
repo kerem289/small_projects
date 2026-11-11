@@ -14,20 +14,23 @@ void Rgb2Grayscale(const Image& source, Image& destination) {
         throw std::invalid_argument("the image dimensions are not the same");
     }
 
-    double RED_COEFF = 0.299;
-    double BLUE_COEFF = 0.587;
-    double GREEN_COEFF = 0.114;
+    const double RED_COEFF = 0.299;
+    const double BLUE_COEFF = 0.114;
+    const double GREEN_COEFF = 0.587;
     destination.channels = 1;
+
+    uint8_t *source_ptr = source.pixels.get();
+    uint8_t *destination_ptr = destination.pixels.get();
 
     int total_values = source.width * source.height;
     for (int i = 0; i < (source.width * source.height * source.channels); i += 3) {
-        int red = source.pixels[i];
-        int green = source.pixels[i+1];
-        int blue = source.pixels[i+2];
+        int red = source_ptr[i];
+        int green = source_ptr[i+1];
+        int blue = source_ptr[i+2];
 
         double grayscale_value = red * RED_COEFF + green * GREEN_COEFF + blue * BLUE_COEFF;
         uint8_t rounded_grayscale = static_cast<uint8_t>(std::round(grayscale_value));
 
-        destination.pixels[i/3] = rounded_grayscale;
+        destination_ptr[i/3] = rounded_grayscale;
     }
 }
