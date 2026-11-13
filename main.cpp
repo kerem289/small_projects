@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstring>
+#include <string>
 #include "memory"
 #include "util/stb_image.h"
 #include "util/stb_image_write.h"
@@ -42,49 +44,39 @@ int main(int argc, char** argv) {
     std::cout << "Attempting to load: " << image_path << "...\n";
 
     // Load the image (0 means auto-detect original channel count)
-    unsigned char* data = stbi_load(image_path, &image.width, &image.height, &image.channels, 0);
-    image.pixels = data;
-    if (!data) {
+    unsigned char* raw_data = stbi_load(image_path, &image.width, &image.height, &image.channels, 3);
+    if (!raw_data) {
         std::cerr << "Failed to load image!\n";
         std::cerr << "Reason: " << stbi_failure_reason() << "\n";
         std::cerr << "Please double-check that the file path is correct and the image is not corrupted.\n";
         return 1;
     }
+    
+    std::cout << "read the image\n";
+    size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;
+    image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[total_bytes]);
+    std::memcpy(image.pixels.get(), raw_data, total_bytes); // for now, let it be like this
+    stbi_image_free(raw_data);
 
-    // stbi_write_png("output.png", image.width, image.height, image.channels, image.pixels, image.width * image.channels);
-
-    // std::cout << (int)data[0] << "\n";
-
-    std::cout << "Dimensions: " << image.width << " x " << image.height << " pixels\n";
-    std::cout << "Channels  : " << image.channels << " (";
-    if (image.channels == 1) std::cout << "Grayscale";
-    else if (image.channels == 3) std::cout << "RGB";
-    else if (image.channels == 4) std::cout << "RGBA";
+    if (image.channels == 1) std::cout << "Grayscale\n";
+    else if (image.channels == 3) std::cout << "RGB\n";
+    else if (image.channels == 4) std::cout << "RGBA\n";
     else std::cout << "Unknown";
-    std::cout << ")\n";
-    std::cout << "Memory Size: " << (image.width * image.height * image.channels) << " bytes\n";
 
-    std::cout << "\nattempting to convert image into grayscale\n";
-    std::cout << "image channel" << image.channels << "\n";
+    std::cout << "starting resizing now\n";
 
     // ------ resizing part
     Image resized_image;
-    resized_image.width = static_cast<int>(image.width * 1.5f);
-    resized_image.height = static_cast<int>(image.height * 1.5f);
+    resized_image.width = static_cast<int>(image.width * 2.0f);
+    resized_image.height = static_cast<int>(image.height * 2.0f);
     resized_image.channels = 3; // rgb image
-    ArrayHolder current = upscale_rgb(image, resized_image);
-
-
-    auto pixelBuffer = std::make_unique<uint8_t[]>(image.width * image.height);
-    uint8_t* rawPointer = pixelBuffer.get();
-    grayscale_image.pixels = rawPointer;
-    
+    resized_image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[resized_image.width * resized_image.height * resized_image.channels]);
+    std::cout << "starting upscaling\n";
+    upscale_rgb(image, resized_image);
 
     std::cout << "saving the resized image\n";
-    stbi_write_png("output_resized.png", grayscale_image.width, grayscale_image.height, grayscale_image.channels, grayscale_image.pixels, grayscale_image.width * grayscale_image.channels);
-
-    stbi_image_free(data);
-    std::cout << "Memory freed successfully.\n";
+    stbi_write_png("output_resized.png", resized_image.width, resized_image.height, resized_image.channels, resized_image.pixels.get(), 0);
+    std::cout << "Done.\n";
 
     return 0;
 }

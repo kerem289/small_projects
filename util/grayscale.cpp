@@ -4,7 +4,9 @@
 #include "image_t.h"
 #include "grayscale.h"
 
+// a helper cpp class for grayscale images
 
+// converts rgb images into grayscale
 void Rgb2Grayscale(const Image& source, Image& destination) {
     if (source.channels != 3) {
         throw std::invalid_argument("image is not rgb");

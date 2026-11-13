@@ -48,7 +48,10 @@ int main(int argc, char** argv) {
     // Load the image (0 means auto-detect original channel count)
     unsigned char* raw_data = stbi_load(image_path, &image.width, &image.height, &image.channels, 0);
     if (!raw_data) {
-        
+        std::cerr << "Failed to load image!\n";
+        std::cerr << "Reason: " << stbi_failure_reason() << "\n";
+        std::cerr << "Please double-check that the file path is correct and the image is not corrupted.\n";
+        return 1;
     }
     
     size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;

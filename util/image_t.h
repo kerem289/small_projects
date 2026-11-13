@@ -39,9 +39,9 @@ struct Image {
     int width;
     int height;
     int channels;
-    std::unique_ptr<uint8_t[]> pixels; // must use get function to get the pointer
+    std::unique_ptr<uint8_t[]> pixels;
 
-    ColorType getPixelRgb(int x, int y) {
+    ColorType getPixelRgb(int x, int y) const {
         int baseIndex = (y * width + x) * channels;
 
         if (channels == 1) {
