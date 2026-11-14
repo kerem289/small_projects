@@ -55,13 +55,13 @@ int main(int argc, char** argv) {
     }
     
     size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;
-    image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[total_bytes]);
-    std::memcpy(image.pixels.get(), raw_data, total_bytes); // for now, let it be like this
+    image.pixels.resize(total_bytes);
+    std::memcpy(image.pixels.data(), raw_data, total_bytes); // for now, let it be like this
     stbi_image_free(raw_data);
 
     // image.pixels = data.get();
 
-    stbi_write_png("output.png", image.width, image.height, image.channels, image.pixels.get(), image.width * image.channels);
+    // stbi_write_png("output.png", image.width, image.height, image.channels, image.pixels.data(), image.width * image.channels);
 
     // std::cout << (int)data[0] << "\n";
 
@@ -80,11 +80,11 @@ int main(int argc, char** argv) {
     grayscale_image.width = image.width;
     grayscale_image.height = image.height;
     grayscale_image.channels = 1;
-    grayscale_image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[image.width * image.height]);
+    grayscale_image.pixels.resize(image.width * image.height);
     Rgb2Grayscale(image, grayscale_image);
 
     std::cout << "saving the grayscale image\n";
-    stbi_write_png("output_grayscale.png", grayscale_image.width, grayscale_image.height, grayscale_image.channels, grayscale_image.pixels.get(), grayscale_image.width * grayscale_image.channels);
+    stbi_write_png("output_grayscale.png", grayscale_image.width, grayscale_image.height, grayscale_image.channels, grayscale_image.pixels.data(), grayscale_image.width * grayscale_image.channels);
 
 
     // stbi_image_free(data);

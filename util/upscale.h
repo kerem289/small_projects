@@ -1,3 +1,3 @@
 #pragma once
 
-void upscale_rgb(const Image& source, const Image& destination);
+void upscale_rgb(Image& source, Image& destination);

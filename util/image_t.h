@@ -1,7 +1,8 @@
+#pragma once
 #include <iostream>
 #include <cstdint>
 #include "memory"
-#pragma once
+#include <vector>
 
 struct Grayscale {
     uint8_t value;
@@ -39,7 +40,7 @@ struct Image {
     int width;
     int height;
     int channels;
-    std::unique_ptr<uint8_t[]> pixels;
+    std::vector<uint8_t> pixels;
 
     ColorType getPixelRgb(int x, int y) const {
         int baseIndex = (y * width + x) * channels;

@@ -5,7 +5,10 @@
 #include "inline_helpers.h"
 #include "upscale.h"
 
-void upscale_rgb(const Image& source, const Image& destination) {
+// !! OPTIMIZE THIS USING VEC.SIZE
+
+// works but pixelated
+void upscale_rgb(Image& source, Image& destination) {
     if (source.channels != 3) {
         throw std::invalid_argument("image is not rgb");
     }
@@ -19,8 +22,8 @@ void upscale_rgb(const Image& source, const Image& destination) {
 
     // int kernel = 3; // automate with kernel later (DO NOT DO IT NOW)
 
-    unsigned char* source_ptr = source.pixels.get();
-    unsigned char* destination_ptr = destination.pixels.get();
+    unsigned char* source_ptr = source.pixels.data();
+    unsigned char* destination_ptr = destination.pixels.data();
     int source_size = source.width * source.height * source.channels;
 
     const float MAIN_POINT_WEIGHT = 0.8f;
@@ -63,3 +66,4 @@ void upscale_rgb(const Image& source, const Image& destination) {
         }
     }
 }
+

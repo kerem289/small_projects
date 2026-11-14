@@ -17,6 +17,8 @@
 
 // ** an example image that resizes image
 
+// ** usage: g++ resize_image.cpp ../util/upscale.cpp -o main
+
 /*
 data[0] is the first pixel's R value.
 data[1] is the first pixel's G value.
@@ -44,24 +46,26 @@ int main(int argc, char** argv) {
     std::cout << "Attempting to load: " << image_path << "...\n";
 
     // Load the image (0 means auto-detect original channel count)
-    unsigned char* raw_data = stbi_load(image_path, &image.width, &image.height, &image.channels, 3);
+    unsigned char* raw_data = stbi_load(image_path, &image.width, &image.height, &image.channels, 0);
     if (!raw_data) {
         std::cerr << "Failed to load image!\n";
         std::cerr << "Reason: " << stbi_failure_reason() << "\n";
         std::cerr << "Please double-check that the file path is correct and the image is not corrupted.\n";
         return 1;
     }
-    
-    std::cout << "read the image\n";
-    size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;
-    image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[total_bytes]);
-    std::memcpy(image.pixels.get(), raw_data, total_bytes); // for now, let it be like this
-    stbi_image_free(raw_data);
 
     if (image.channels == 1) std::cout << "Grayscale\n";
     else if (image.channels == 3) std::cout << "RGB\n";
     else if (image.channels == 4) std::cout << "RGBA\n";
     else std::cout << "Unknown";
+    
+    std::cout << "read the image\n";
+    size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;
+    image.pixels.resize(total_bytes);
+    std::memcpy(image.pixels.data(), raw_data, total_bytes);
+    stbi_image_free(raw_data);
+
+    
 
     std::cout << "starting resizing now\n";
 
@@ -70,12 +74,12 @@ int main(int argc, char** argv) {
     resized_image.width = static_cast<int>(image.width * 1.8f);
     resized_image.height = static_cast<int>(image.height * 1.4f);
     resized_image.channels = 3; // rgb image
-    resized_image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[resized_image.width * resized_image.height * resized_image.channels]);
+    resized_image.pixels.resize(resized_image.width * resized_image.height * resized_image.channels);
     std::cout << "starting upscaling\n";
     upscale_rgb(image, resized_image);
 
     std::cout << "saving the resized image\n";
-    stbi_write_png("output_resized.png", resized_image.width, resized_image.height, resized_image.channels, resized_image.pixels.get(), 0);
+    stbi_write_png("output_resized.png", resized_image.width, resized_image.height, resized_image.channels, resized_image.pixels.data(), 0);
     std::cout << "Done.\n";
 
     return 0;

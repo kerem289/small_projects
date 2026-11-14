@@ -1,3 +1,3 @@
 #pragma once
 
-void Rgb2Grayscale(const Image& source, Image& destination);
+void Rgb2Grayscale(Image& source, Image& destination);
