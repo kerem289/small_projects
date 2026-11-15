@@ -5,8 +5,11 @@
 #include <cstddef>
 #include <span>
 #include <ranges>
+#include "image_t.h"
+#include <cstring>
 
-// !! adjust it to vector
+// ** need to resize destination beforehand
+// needs optimization
 void multiplyMatrixCol(const int* __restrict matrix, auto* col_vector, 
     size_t source_row_count, size_t col_vector_dim, int* __restrict destination) {
     // we do matrix * col_vector
@@ -26,8 +29,10 @@ void multiplyMatrixCol(const int* __restrict matrix, auto* col_vector,
     }
 }
 
-
-void multiplyRowColVector(const int* __restrict row_vector, auto* __restrict col_vector, size_t size, int* __restrict destination) {
+// ** need to resize destination beforehand
+// !! probably wrong
+// needs optization (I think)
+void multiplyRowColVector(const int* __restrict row_vector, auto* col_vector, size_t size, int* __restrict destination) {
     int sum = 0;
     for (size_t i = 0; i < size; ++i) {
         sum += (row_vector[i] * col_vector[i]);
@@ -35,31 +40,64 @@ void multiplyRowColVector(const int* __restrict row_vector, auto* __restrict col
     *destination = sum;
 }
 
-std::vector<int> getColumn(std::vector<int> matrix, size_t jump) { // jump = original_matrix column count
-    auto column_view = matrix | std::views::stride(count);
-    return std::ranges::to<std::vector<int>>(column_view);
+// ** must resize result based on matrix height
+// ** you must pass it 3 times for RGB
+// optimized
+void getColumn(const int* __restrict matrix, int* __restrict result, size_t height, size_t width, size_t channels, size_t col_index) { // jump = original_matrix column count
+    if (col_index >= width) [[unlikely]] {
+        throw std::invalid_argument("column index is larger than the width");
+    }
+
+    size_t jump = width * channels;
+    const int* __restrict src = matrix + (col_index * channels);
+    int* __restrict dst = result;
+    for (size_t r = 0; r < height; ++r) {
+        *dst = *src;
+        src += jump;
+        dst++;
+    }
+}
+
+// row_count = 0 for first row
+// need to get RGB separately
+void getRow(const int* __restrict matrix, int* __restrict result, size_t width, size_t channels, size_t row_count) {
+
+    const int* __restrict src = matrix + (width * channels * row_count);
+    int* __restrict dst = result;
+    for (size_t i = 0; i < width; ++i) {
+        *dst = *src;
+        src += channels;
+        dst++;
+    }
 }
 
 
 // multiply two matrices
+// needs optimization
 void multiplyMatrices(const int * __restrict source, int* __restrict scaling, 
-        std::span<size_t, std::dynamic_extent> source_dim, std::span<size_t, std::dynamic_extent> scaling_dim, 
+        std::vector<size_t> source_dim, std::vector<size_t> scaling_dim, 
         int* __restrict destination) {
     // source dimensions expected = (height, width, channels) (what we expect from source_dim)
     // scaling dimensions expected (height, width)
-    // elements are stored as 
-    if (std::size(scaling_dim) != 2) {
+    if (std::size(scaling_dim) != 2) [[unlikely]] {
         throw std::invalid_argument("the scaling dimension is not right");
     }
-    if (source_dim[0] != scaling_dim[1]) {
+    if (source_dim[1] != scaling_dim[0]) [[unlikely]] {
         throw std::invalid_argument("dimensions do not match");
     }
     
     // we do source * scaling
 
-    for (size_t y = 0; y < surce_dim[0]; ++y) {
-        int* image_column = getColumn(matrix).data();
-        multiplyMatrixCol(source[y], )
+    size_t scaling_height = scaling_dim[0];
+    size_t scaling_width = scaling_dim[1];
+    size_t column_number = 0;
+    for (size_t scaling_column_number = 0; scaling_column_number < scaling_width; ++scaling_column_number) {
+        for (size_t y = 0; y < surce_dim[0]; ++y) {
+            std::vector<int> column_buffer(scaling_height);
+            getColumn(scaling, column_buffer.data(), scaling_height, scaling_width, 1, column_number);
+            std::vector<int> column()
+        }
+
     }
 
     if ()

@@ -36,6 +36,7 @@ struct ColorType {
     }
 };
 
+// !! convert these into size_t and test if its fast
 struct Image {
     int width;
     int height;
