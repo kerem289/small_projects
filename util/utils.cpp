@@ -6,11 +6,12 @@
 #include <span>
 #include <ranges>
 #include "image_t.h"
+#include "utils.h"
 #include <cstring>
 
 // ** need to resize destination beforehand
 // needs optimization
-void multiplyMatrixCol(const int* __restrict matrix, auto* col_vector, 
+void multiplyMatrixCol(const int* __restrict matrix, const int* __restrict col_vector, 
     size_t source_row_count, size_t col_vector_dim, int* __restrict destination) {
     // we do matrix * col_vector
 
@@ -30,14 +31,13 @@ void multiplyMatrixCol(const int* __restrict matrix, auto* col_vector,
 }
 
 // ** need to resize destination beforehand
-// !! probably wrong
 // needs optization (I think)
-void multiplyRowColVector(const int* __restrict row_vector, auto* col_vector, size_t size, int* __restrict destination) {
+int multiplyRowColVector(const int* __restrict row_vector, const int* __restrict col_vector, size_t size) {
     int sum = 0;
     for (size_t i = 0; i < size; ++i) {
         sum += (row_vector[i] * col_vector[i]);
     }
-    *destination = sum;
+    return sum;
 }
 
 // ** must resize result based on matrix height
@@ -74,31 +74,61 @@ void getRow(const int* __restrict matrix, int* __restrict result, size_t width, 
 
 // multiply two matrices
 // needs optimization
-void multiplyMatrices(const int * __restrict source, int* __restrict scaling, 
-        std::vector<size_t> source_dim, std::vector<size_t> scaling_dim, 
-        int* __restrict destination) {
+void multiplyMatrices(
+    const int * __restrict source, 
+    const int* __restrict scaling, 
+    std::vector<size_t> source_dim,
+    std::vector<size_t> scaling_dim, 
+    int* __restrict destination) 
+{
     // source dimensions expected = (height, width, channels) (what we expect from source_dim)
     // scaling dimensions expected (height, width)
-    if (std::size(scaling_dim) != 2) [[unlikely]] {
+    // destination dimensions = (source_height, scaling_width, channels)
+    if (scaling_dim.size() != 2) [[unlikely]] {
         throw std::invalid_argument("the scaling dimension is not right");
     }
     if (source_dim[1] != scaling_dim[0]) [[unlikely]] {
         throw std::invalid_argument("dimensions do not match");
     }
+    if (source_dim.size() < 3) [[unlikely]] {
+        throw std::invalid_argument("this does not support grayscale yet");
+    }
     
     // we do source * scaling
 
-    size_t scaling_height = scaling_dim[0];
-    size_t scaling_width = scaling_dim[1];
-    size_t column_number = 0;
-    for (size_t scaling_column_number = 0; scaling_column_number < scaling_width; ++scaling_column_number) {
-        for (size_t y = 0; y < surce_dim[0]; ++y) {
-            std::vector<int> column_buffer(scaling_height);
-            getColumn(scaling, column_buffer.data(), scaling_height, scaling_width, 1, column_number);
-            std::vector<int> column()
-        }
+    const size_t scaling_height = scaling_dim[0];
+    const size_t scaling_width = scaling_dim[1];
+    const size_t source_width = source_dim[1];
+    const size_t source_height = source_dim[0];
+    const size_t source_channels = source_dim[2];
 
+    for (size_t y = 0; y < source_height; ++y) {
+        for (size_t x = 0; x < scaling_width; ++x) {
+            for (size_t c = 0; c < source_channels; ++c) {
+                int sum = 0;
+                for (size_t k = 0; k < source_width; ++k) {
+                    int src_val = source[(y * source_width + k) * source_channels + c];
+                    int scale_val = scaling[(k * scaling_width + x)];
+                    sum += src_val * scale_val;
+                }
+                destination[(y * scaling_width + x) * source_channels + c] = sum;
+            }
+        }
     }
 
-    if ()
+    /*
+    for (size_t scaling_column_number = 0; scaling_column_number < scaling_width; ++scaling_column_number) {
+        std::vector<int> column_buffer(scaling_height);
+        getColumn(scaling, column_buffer.data(), scaling_height, scaling_width, 1, scaling_column_number);
+        for (size_t y = 0; y < source_height; ++y) {
+            for (size_t c = 0; c < source_channels; ++c) { // do it for RGB
+                
+                std::vector<int> row_buffer(source_width);
+                getRow(source + c, row_buffer.data(), source_width, source_channels, y);
+                int result = multiplyRowColVector(row_buffer.data(), column_buffer.data(), source_width);
+                destination[(y * scaling_width + scaling_column_number) * source_channels + c] = result;
+            }
+        }
+    }
+    */
 }
