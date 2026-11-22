@@ -37,5 +37,4 @@ public:
             output[i] = bias[i] + output[i];
         }
     }
-
 };
