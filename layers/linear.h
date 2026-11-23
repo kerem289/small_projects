@@ -19,6 +19,7 @@ public:
     std::vector<float> output;
     std::vector<float> activation_result;
     std::vector<float> activation_derivative;
+    std::vector<float> error;
 
     explicit LinearLayer(size_t wi, size_t wo) : input_width(wi), out_width(wo) {
         // output width = weights height
@@ -30,6 +31,7 @@ public:
         output.resize(wo);
         activation_result.resize(wo);
         activation_derivative.resize(wo);
+        error.resize(wo);
 
         generateRandomValues(weights);
         generateRandomValues(bias);
@@ -42,10 +44,13 @@ public:
         }
     }
 
-    void updateLayer(const float* __restrict error, const float* __restrict train_x, const float learning_rate) {
-        for (size_t i = 0; i < out_width; ++i) {
+    std::vector<float> updateLayer(const float* __restrict error, const float* __restrict train_x, const float learning_rate) {
+        std::vector<float> return_val(input_width);
+        for (size_t i = 0; i < input_width; ++i) {
             weights[i] -= error[i] * activation_derivative[i] * learning_rate * train_x[i];
             bias[i] -= error[i] * activation_derivative[i] * learning_rate;
+            return_val[i] = error[i] * activation_derivative[i];
         }
+        return return_val;
     }
 };
