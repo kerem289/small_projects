@@ -38,10 +38,9 @@ int main() {
             std::vector<float> layer1_delta = layer2.updateLayer(error.data(), &train_x[i], learning_rate);
             layer1.updateLayer(layer1_delta.data(), &train_x[i], learning_rate);
 
-            if (e % 10000 == 0) {
+            if (e % 100000 == 0) {
                 std::cout << layer2.activation_result[0] << "-" << train_y[i] << "\n";
             }
-
         }
     }
 

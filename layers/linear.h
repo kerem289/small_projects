@@ -27,7 +27,7 @@ public:
         input_height = 1;
         out_height = 1;
         bias.resize(wo);
-        weights.resize(wi * wo);
+        weights.resize(wi * wo); // wo row wi column
         output.resize(wo);
         activation_result.resize(wo);
         activation_derivative.resize(wo);
