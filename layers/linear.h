@@ -17,6 +17,7 @@ public:
     std::vector<float> weights;
     std::vector<float> bias;
     std::vector<float> output;
+    std::vector<float> last_input;
     std::vector<float> activation_result;
     std::vector<float> activation_derivative;
     std::vector<float> error;
@@ -38,18 +39,39 @@ public:
     }
 
     void calculate(std::vector<float>& input) {
+        last_input = input;
         multiplyRowMatrix(input.data(), weights.data(), output.data(), input_width, out_width);
         for (size_t i = 0; i < out_width; ++i) {
             output[i] = bias[i] + output[i];
         }
     }
 
-    std::vector<float> updateLayer(const float* __restrict error, const float* __restrict train_x, const float learning_rate) {
-        std::vector<float> return_val(input_width);
-        for (size_t i = 0; i < input_width; ++i) {
-            weights[i] -= error[i] * activation_derivative[i] * learning_rate * train_x[i];
-            bias[i] -= error[i] * activation_derivative[i] * learning_rate;
-            return_val[i] = error[i] * activation_derivative[i];
+    std::vector<float> updateLayer(const float* __restrict incoming_err, const float learning_rate) {
+        std::vector<float> return_val(input_width, 0.0f);
+        // return_val length = out_width
+        for (size_t y = 0; y < out_width; ++y) {
+            float delta = incoming_err[y] * activation_derivative[y];
+            for (size_t x = 0; x < input_width; ++x) {
+                return_val[x] += weights[y * input_width + x] * delta;
+
+                weights[y * input_width + x] -= learning_rate * delta * last_input[x];
+                
+                
+            }
+            bias[y] -= delta * learning_rate;
+        }
+        return return_val;
+    }
+
+    std::vector<float> updateLastLayer(const float* __restrict error, const float learning_rate) {
+        std::vector<float> return_val(input_width, 0.f);
+        for (size_t y = 0; y < out_width; ++y) {
+            float delta = error[y];
+            for (size_t x = 0; x < input_width; ++x) {
+                return_val[x] += weights[y * input_width + x] * delta; // matrix multiplication
+                weights[y * input_width + x] -= error[y] * learning_rate * last_input[x];
+            }
+            bias[y] -= error[y] * learning_rate;
         }
         return return_val;
     }

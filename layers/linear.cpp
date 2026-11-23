@@ -2,7 +2,9 @@
 #include "activation.h"
 #include "error.h"
 #include <iostream>
+#include "../util/export_layer.h"
 
+// c++ linear.cpp ../util/utils.cpp 
 int main() {
     /*
     std::vector<float> si = {0.433f};
@@ -17,7 +19,32 @@ int main() {
 
     std::vector<float> test_x = {7.f, 60.f};
     std::vector<float> test_y = {17.f, 123.f};
+
+    float learning_rate = 0.0000002;
+    LinearLayer layer1(1,1);
+    LinearLayer layer2(1,1);
+    size_t epochs = 1000000;
+
+    for(size_t e = 0; e < epochs; ++e) {
+        for (size_t i = 0; i < train_x.size(); ++i) {
+            std::vector<float> input_vec{train_x[i]};
+            layer1.calculate(input_vec);
+            layer1.activation_result = cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
+            layer1.activation_derivative = deriv_cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
+
+            layer2.calculate(layer1.output);
+            std::vector<float> error = merror(layer2.output.data(), &train_y[i], layer2.out_width);
+            std::vector<float> layer2_delta = layer2.updateLastLayer(error.data(), learning_rate);
+            layer1.updateLayer(layer2_delta.data(), learning_rate);
+
+            if (e % 1000000 == 0) {
+                std::cout << layer2.output[0] << "-" << train_y[0] << "\n";
+            }
+        }
+    }
     
+
+    /*
     //std::cout << "0" << "\n";
     float learning_rate = 0.000002;
     LinearLayer layer1(1,1);
@@ -44,6 +71,9 @@ int main() {
         }
     }
 
+    std::cout << layer1.weights[0] << "\n";
+    export_model<LinearLayer>("saving.txt", layer1);
+    */
 
     /*
     LinearLayer layer(1,1);
