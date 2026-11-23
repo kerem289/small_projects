@@ -10,3 +10,13 @@ float MSE(const float* __restrict pred, const float* __restrict actual, size_t s
 
     return error;
 }
+
+std::vector<float> merror(const float* __restrict pred, const float* __restrict actual, size_t size) {
+    std::vector<float> err(size);
+
+    for (size_t i = 0; i < size; ++i) {
+        err[i] = (pred[i] - actual[i]);
+    }
+
+    return err;
+}
