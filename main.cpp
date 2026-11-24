@@ -33,8 +33,38 @@ data[6] is the third pixel's R value.
 
 int main(int argc, char** argv) {
 
-    std::vector<int> source = {1,2};
-    std::vector<int> scaling = {1,1};
+    if (argc < 2) {
+        std::cerr << "Error: No image path provided.\n";
+        std::cerr << "Usage: " << argv[0] << " <image_path>\n";
+        return 1;
+    }
+
+    const char* image_path = argv[1];
+    Image image;
+
+    std::cout << "Attempting to load: " << image_path << "...\n";
+
+    // Load the image (0 means auto-detect original channel count)
+    unsigned char* raw_data = stbi_load(image_path, &image.width, &image.height, &image.channels, 3);
+    if (!raw_data) {
+        std::cerr << "Failed to load image!\n";
+        std::cerr << "Reason: " << stbi_failure_reason() << "\n";
+        std::cerr << "Please double-check that the file path is correct and the image is not corrupted.\n";
+        return 1;
+    }
+    
+    std::cout << "read the image\n";
+    size_t total_bytes = static_cast<size_t>(image.width) * image.height * image.channels;
+    image.pixels = std::unique_ptr<uint8_t[]>(new uint8_t[total_bytes]);
+    std::memcpy(image.pixels.get(), raw_data, total_bytes); // for now, let it be like this
+    stbi_image_free(raw_data);
+
+    if (image.channels == 1) std::cout << "Grayscale\n";
+    else if (image.channels == 3) std::cout << "RGB\n";
+    else if (image.channels == 4) std::cout << "RGBA\n";
+    else std::cout << "Unknown";
+
+    
 
     std::vector<size_t> source_dim = {1, 2, 1}; // (height, width, channels)
     std::vector<size_t> scaling_dim = {2,1}; // (height, width)

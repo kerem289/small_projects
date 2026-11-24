@@ -38,31 +38,31 @@ struct ColorType {
 
 // !! convert these into size_t and test if its fast
 struct Image {
-    int width;
-    int height;
-    int channels;
+    size_t width;
+    size_t height;
+    size_t channels;
     std::vector<uint8_t> pixels;
 
-    ColorType getPixelRgb(int x, int y) const {
-        int baseIndex = (y * width + x) * channels;
+    ColorType getPixelRgb(size_t x, size_t y) const {
+        size_t baseIndex = (y * width + x) * channels;
 
         if (channels == 1) {
             return ColorType{1, Grayscale(pixels[baseIndex])};
         }
         else if(channels == 3) {
             return ColorType{3, RGB(pixels[baseIndex], pixels[baseIndex + 1], pixels[baseIndex + 2])};
-            
+
         }
 
         return ColorType{3, RGB(pixels[baseIndex], pixels[baseIndex + 1], pixels[baseIndex + 2])};
     }
 
-     bool setPixelRgb(int x, int y, RGB color) {
+     void setPixelRgb(size_t x, size_t y, RGB color) {
         // add safety checks for different channels
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return false;
+        if (x >= width || y >= height) {
+            return;
         }
-        int baseIndex = (y * width + x) * channels;
+        size_t baseIndex = (y * width + x) * channels;
         if (channels == 1) {
             pixels[baseIndex] = static_cast<uint8_t>(0.299f * color.r + 0.587f * color.g + 0.114f * color.b);
         } else if (channels == 3) {
@@ -80,6 +80,6 @@ struct Image {
             pixels[baseIndex + 2] = color.b;
 
         }
-        return true;
+        return;
     }
 };

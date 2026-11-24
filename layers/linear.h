@@ -40,6 +40,7 @@ public:
 
     void calculate(std::vector<float>& input) {
         last_input = input;
+        // std::fill(output.begin(), output.end(), 0.0f);
         multiplyRowMatrix(input.data(), weights.data(), output.data(), input_width, out_width);
         for (size_t i = 0; i < out_width; ++i) {
             output[i] = bias[i] + output[i];

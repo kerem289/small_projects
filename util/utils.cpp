@@ -8,6 +8,28 @@
 #include "image_t.h"
 #include "utils.h"
 #include <cstring>
+#include <random>
+
+
+void multiplyRowMatrix(const float* __restrict row_vector, const float* __restrict matrix, float* __restrict destination,
+     size_t matrix_width, size_t matrix_height) {
+    // matrix width == row width since we are multiplying row vector and matrix
+    // destination width = matrix height; destination height = 1
+    for (size_t y = 0; y < matrix_height; ++y) {
+        float sum = 0;
+        for (size_t x = 0; x < matrix_width; ++x) {
+            sum += matrix[x + y * matrix_width] * row_vector[x];
+        }
+        destination[y] = sum;
+    }
+}
+
+void generateRandomValues(std::vector<float>& input_vector) {
+    std::random_device rd;
+    std::mt19937 engine(rd());
+    std::uniform_real_distribution<float> dist(0.f, 1.f);
+    for (auto& v : input_vector) v = dist(engine);
+}
 
 // ** need to resize destination beforehand
 // needs optimization
@@ -74,61 +96,3 @@ void getRow(const int* __restrict matrix, int* __restrict result, size_t width, 
 
 // multiply two matrices
 // needs optimization
-void multiplyMatrices(
-    const int * __restrict source, 
-    const int* __restrict scaling, 
-    std::vector<size_t> source_dim,
-    std::vector<size_t> scaling_dim, 
-    int* __restrict destination) 
-{
-    // source dimensions expected = (height, width, channels) (what we expect from source_dim)
-    // scaling dimensions expected (height, width)
-    // destination dimensions = (source_height, scaling_width, channels)
-    if (scaling_dim.size() != 2) [[unlikely]] {
-        throw std::invalid_argument("the scaling dimension is not right");
-    }
-    if (source_dim[1] != scaling_dim[0]) [[unlikely]] {
-        throw std::invalid_argument("dimensions do not match");
-    }
-    if (source_dim.size() < 3) [[unlikely]] {
-        throw std::invalid_argument("this does not support grayscale yet");
-    }
-    
-    // we do source * scaling
-
-    const size_t scaling_height = scaling_dim[0];
-    const size_t scaling_width = scaling_dim[1];
-    const size_t source_width = source_dim[1];
-    const size_t source_height = source_dim[0];
-    const size_t source_channels = source_dim[2];
-
-    for (size_t y = 0; y < source_height; ++y) {
-        for (size_t x = 0; x < scaling_width; ++x) {
-            for (size_t c = 0; c < source_channels; ++c) {
-                int sum = 0;
-                for (size_t k = 0; k < source_width; ++k) {
-                    int src_val = source[(y * source_width + k) * source_channels + c];
-                    int scale_val = scaling[(k * scaling_width + x)];
-                    sum += src_val * scale_val;
-                }
-                destination[(y * scaling_width + x) * source_channels + c] = sum;
-            }
-        }
-    }
-
-    /*
-    for (size_t scaling_column_number = 0; scaling_column_number < scaling_width; ++scaling_column_number) {
-        std::vector<int> column_buffer(scaling_height);
-        getColumn(scaling, column_buffer.data(), scaling_height, scaling_width, 1, scaling_column_number);
-        for (size_t y = 0; y < source_height; ++y) {
-            for (size_t c = 0; c < source_channels; ++c) { // do it for RGB
-                
-                std::vector<int> row_buffer(source_width);
-                getRow(source + c, row_buffer.data(), source_width, source_channels, y);
-                int result = multiplyRowColVector(row_buffer.data(), column_buffer.data(), source_width);
-                destination[(y * scaling_width + scaling_column_number) * source_channels + c] = result;
-            }
-        }
-    }
-    */
-}
