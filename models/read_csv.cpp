@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include "read_csv.h"
 
-Dataset read_file(const char* filename, std::unordered_map<std::string, float, string_hash, string_equal> lookup) {
+Dataset read_file(const char* filename, std::unordered_map<std::string_view, float>& lookup, bool skip_header = false, bool skip_first_col = false) {
     Dataset data;
     int fd = open(filename, O_RDONLY);
     struct stat sb;
@@ -23,15 +23,37 @@ Dataset read_file(const char* filename, std::unordered_map<std::string, float, s
         return data;
     }
     std::string_view file_view(addr, length);
-    data.data.reserve(length/10);
+    data.data.reserve(length/4);
     size_t cursor = 0;
+
+    if (skip_header && cursor < length) { // skip header
+        size_t first_newline = file_view.find('\n', cursor);
+        cursor = (first_newline == std::string_view::npos) ? length : first_newline + 1;
+    }
+
     while (cursor < length) {
         size_t next_newline = file_view.find("\n", cursor);
         if (next_newline == std::string_view::npos) {
             next_newline = length;
         }
         std::string_view line = file_view.substr(cursor, next_newline - cursor);
+        if (!line.empty() && line.back() == '\r') {
+            line.remove_suffix(1);
+        }
+        if (line.empty()) {
+            cursor = next_newline + 1;
+            continue;
+        }
         size_t line_cursor = 0;
+
+        if (skip_first_col) {
+            size_t first_comma = line.find(",", line_cursor);
+            if (first_comma == std::string_view::npos) {
+                cursor = next_newline + 1; // empty row
+            }
+            line_cursor = first_comma + 1;
+        }
+
         while (line_cursor < line.length()) {
             size_t next_comma = line.find(",", line_cursor);
             if (next_comma == std::string_view::npos) {
@@ -50,9 +72,10 @@ Dataset read_file(const char* filename, std::unordered_map<std::string, float, s
                 }
             }
             line_cursor = next_comma + 1;
+            // std::cout << next_comma << "\n";
         }
         data.rows++;
-        cursor += next_newline + 1;
+        cursor = next_newline + 1;
     }
     munmap(addr, length);
     close(fd);
