@@ -26,7 +26,7 @@ Dataset read_file(const char* filename, std::unordered_map<std::string_view, flo
     data.data.reserve(length/4);
     size_t cursor = 0;
 
-    if (skip_header && cursor < length) { // skip header
+    if (skip_header && cursor < length) {
         size_t first_newline = file_view.find('\n', cursor);
         cursor = (first_newline == std::string_view::npos) ? length : first_newline + 1;
     }
@@ -68,11 +68,10 @@ Dataset read_file(const char* filename, std::unordered_map<std::string_view, flo
                 float val;
                 auto [ptr, ec] = std::from_chars(cell.data(), cell.data() + cell.length(), val);
                 if (ec == std::errc()) {
-                    data.data.push_back(val);
+                    data.data.push_back(static_cast<float>(val));
                 }
             }
             line_cursor = next_comma + 1;
-            // std::cout << next_comma << "\n";
         }
         data.rows++;
         cursor = next_newline + 1;
