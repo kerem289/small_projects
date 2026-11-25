@@ -20,80 +20,40 @@ int main() {
     std::vector<float> test_x = {7.f, 60.f};
     std::vector<float> test_y = {17.f, 123.f};
 
-    float learning_rate = 0.000002;
-    LinearLayer layer1(1,3);
-    LinearLayer layer2(3,1);
+    float learning_rate = 0.02;
+    LinearLayer layer0(1, 2);
+    LinearLayer layer1(2,2);
+    LinearLayer layer2(2, 1);
     size_t epochs = 100000;
+    float scale = 1000;
 
     for(size_t e = 0; e < epochs; ++e) {
         for (size_t i = 0; i < train_x.size(); ++i) {
             
-            std::vector<float> input_vec{train_x[i]};
-            layer1.calculate(input_vec);
-            layer1.activation_result = cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
-            layer1.activation_derivative = deriv_cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
+            std::vector<float> input_vec{ train_x[i] / scale };
+            float target_y = train_y[i] / scale;
+            
+            layer0.calculate(input_vec);
+            layer0.activation_result = improved_cosa(layer0.output.data(), layer0.output.size());
+            layer0.activation_derivative = improved_deriv_cosa(layer0.output.data(), layer0.output.size());
+
+            layer1.calculate(layer0.activation_result);
+            layer1.activation_result = improved_cosa(layer1.output.data(), layer1.output.size());
+            layer1.activation_derivative = improved_deriv_cosa(layer1.output.data(), layer1.output.size());
 
             layer2.calculate(layer1.activation_result);
-            std::vector<float> error = merror(layer2.output.data(), &train_y[i], layer2.out_width);
+
+            // Backward Pass
+            std::vector<float> error = merror(layer2.output.data(), &target_y, layer2.out_width);
             std::vector<float> layer2_delta = layer2.updateLastLayer(error.data(), learning_rate);
-            layer1.updateLayer(layer2_delta.data(), learning_rate);
+            std::vector<float> layer1_delta = layer1.updateLayer(layer2_delta.data(), learning_rate);
+            layer0.updateLayer(layer1_delta.data(), learning_rate);
             
             if (e % 10000 == 0 && e != 0) {
-                std::cout << layer2.output[0] << "-" << train_y[i] << "\n";
+                std::cout << layer2.output[0] * scale << "-" << train_y[i] << "\n";
             }
         }
     }
-    
-
-    /*
-    //std::cout << "0" << "\n";
-    float learning_rate = 0.000002;
-    LinearLayer layer1(1,1);
-    LinearLayer layer2(1,1);
-    size_t epochs = 100000;
-
-    for (size_t e = 0; e < epochs; ++e) {
-        for (size_t i = 0; i < train_x.size(); ++i) {
-            std::vector<float> input_vec{train_x[i]};
-            layer1.calculate(input_vec);
-            layer1.activation_result = cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
-            layer1.activation_derivative = deriv_cosa(layer1.output.data(), static_cast<size_t>(layer1.output.size()));
-
-            layer2.calculate(layer1.output);
-            layer2.activation_result = cosa(layer2.output.data(), static_cast<size_t>(layer2.output.size()));
-            layer2.activation_derivative = deriv_cosa(layer2.output.data(), static_cast<size_t>(layer2.output.size()));
-            std::vector<float> error = merror(layer2.activation_result.data(), &train_y[i], layer2.out_width);
-            std::vector<float> layer1_delta = layer2.updateLayer(error.data(), &train_x[i], learning_rate);
-            layer1.updateLayer(layer1_delta.data(), &train_x[i], learning_rate);
-
-            if (e % 100000 == 0) {
-                std::cout << layer2.activation_result[0] << "-" << train_y[i] << "\n";
-            }
-        }
-    }
-
-    std::cout << layer1.weights[0] << "\n";
-    export_model<LinearLayer>("saving.txt", layer1);
-    */
-
-    /*
-    LinearLayer layer(1,1);
-    size_t epochs = 1000000;
-
-    for (size_t e = 0; e < epochs; ++e) {
-        for (size_t i = 0; i < train_x.size(); ++i) {
-            std::vector<float> input_vec{train_x[i]};
-            layer.calculate(input_vec);
-            layer.activation_result = cosa(layer.output.data(), static_cast<size_t>(layer.output.size()));
-            std::vector<float> error = merror(&layer.activation_result[0], &train_y[i], layer.out_width);
-            layer.activation_derivative = deriv_cosa(layer.output.data(), 1);
-            layer.updateLayer(error.data(), &train_x[i], learning_rate);
-            if (e % 100000 == 0) {
-                std::cout << layer.activation_result[0] << "-" << train_y[i] << "\n";
-            }
-        }
-    }
-    */
 
     return 0;
 }

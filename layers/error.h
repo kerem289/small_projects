@@ -13,7 +13,7 @@ float MSE(const float* __restrict pred, const float* __restrict actual, size_t s
 
 std::vector<float> merror(const float* __restrict pred, const float* __restrict actual, size_t size) {
     std::vector<float> err(size);
-
+    // set this to be scale invariant
     for (size_t i = 0; i < size; ++i) {
         //err[i] = std::pow((pred[i] - actual[i]), 2);
         err[i] = (pred[i] - actual[i]);
