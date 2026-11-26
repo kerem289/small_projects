@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <stdexcept>
 #include "read_csv.h"
+#include <limits>
 
 
 Dataset read_file(const char* filename, std::unordered_map<std::string_view, float>& lookup, bool skip_header = false, bool skip_first_col = false) {
@@ -86,23 +87,29 @@ Dataset read_file(const char* filename, std::unordered_map<std::string_view, flo
     return data;
 }
 
-
 void scale_dataset(std::vector<float>& dataset, std::vector<float>& scaling, size_t cols, size_t rows) {
     if (!scaling.empty()) {
         size_t total_size = cols * rows;
         size_t count = scaling.size() / 3;
-        std::vector<float> max_values(count, 0.f);
-        std::vector<float> min_values(count, 0.f);
+        std::vector<float> max_values(count, std::numeric_limits<float>::lowest());
+        std::vector<float> min_values(count, std::numeric_limits<float>::max());
+        if (rows == 0 || cols == 0 || dataset.size() != cols * rows) {
+        throw std::invalid_argument("Dataset dimensions do not match cols * rows");
+        }
+        if (scaling.size() % 3 != 0) {
+            throw std::invalid_argument("Scaling vector size must be a multiple of 3");
+        }
         for (size_t r = 0; r < rows; ++r) {
             for (size_t i = 0; i < count; ++i) {
-                max_values[i] = std::max(max_values[i], dataset[r * cols + i]);
-                min_values[i] = std::min(min_values[i], dataset[r * cols + i]);
+                size_t column = static_cast<size_t>(scaling[i*3]);
+                max_values[i] = std::max(max_values[i], dataset[r * cols + column]);
+                min_values[i] = std::min(min_values[i], dataset[r * cols + column]);
             }
         }
 
         for (size_t i = 0; i < count; ++i) {
-            if (max_values[i] == min_values[i]) {
-                throw std::invalid_argument("all the argument are the same for a column");
+        if (std::abs(max_values[i] - min_values[i]) <= 1e-7f) {
+            throw std::invalid_argument("All values are the same for a scaled column");
             }
         }
 

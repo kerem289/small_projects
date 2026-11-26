@@ -16,7 +16,7 @@ int main() {
         {std::string_view("Iris-versicolor"), 3.f}
     };
     std::vector<float> scaling = {
-        0.f, 1.f, 3.f,
+        0.f, 0.f, 2.f,
         1.f, 0.f, 1.f,
         2.f, 0.f, 1.f,
         3.f, 0.f, 1.f
