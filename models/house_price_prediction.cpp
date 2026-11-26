@@ -7,6 +7,7 @@
 #include "read_csv.h"
 
 // add weights to each element. ex: 1st element weights more than the 2nd one (scaling)
+// c++ house_price_prediction.cpp read_csv.cpp ../util/utils.cpp -o main
 
 int main() {
     std::unordered_map<std::string_view, float> lookup = {
@@ -29,7 +30,7 @@ int main() {
 
     
     size_t epochs = 1000000;
-    size_t learning_rate = 0.00002;
+    float learning_rate = 0.00002;
     size_t scale = 1;
 
     std::cout << "starting" << "\n";
@@ -41,7 +42,7 @@ int main() {
             std::vector<float>::const_iterator first = dataset.data.begin() + pos; // make it so that my function accepts O(1)
             std::vector<float>::const_iterator last = dataset.data.begin() + pos + 4;
             std::vector<float> input_vec(first, last);
-            float target_y = dataset.data[i* 5 + 4];
+            float target_y = dataset.data[pos + 4];
 
             layer0.calculate(input_vec);
             layer0.activation_result = improved_cosa(layer0.output.data(), layer0.output.size());
@@ -56,14 +57,14 @@ int main() {
             layer2.activation_derivative = improved_deriv_cosa(layer2.output.data(), layer2.output.size());
 
             layer3.calculate(layer2.activation_result);
-            std::vector<float> error = merror(layer2.output.data(), &target_y, layer2.out_width);
+            std::vector<float> error = merror(layer3.output.data(), &target_y, layer2.out_width);
             std::vector<float> layer3_delta = layer3.updateLastLayer(error.data(), learning_rate);
             std::vector<float> layer2_delta = layer2.updateLayer(layer3_delta.data(), learning_rate);
             std::vector<float> layer1_delta = layer1.updateLayer(layer2_delta.data(), learning_rate);
             layer0.updateLayer(layer1_delta.data(), learning_rate);
 
             if (e % 1000 == 0 && e != 0) {
-                std::cout << layer3.output[0] * scale << "-" << dataset.data[i * 5 + 4] << "\n";
+                std::cout << layer3.output[0] << "-" << dataset.data[i * 5 + 4] << "\n";
             }
 
         }
