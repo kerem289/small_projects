@@ -45,7 +45,7 @@ int main() {
     layer2.setActivationFunction(mReLU);
     layer2.setActivationDerivative(deriv_mReLU);
     
-    size_t epochs = 100000;
+    size_t epochs = 30000;
     float learning_rate = 0.00002;
 
     std::cout << "starting" << "\n";
@@ -60,16 +60,16 @@ int main() {
             float target_y = dataset.data[pos + 4];
 
             layer0.calculate(input_vec);
-            layer0.applyActivationFunction(layer0.output.data(), layer0.output.size());
-            layer0.applyActivationDerivative(layer0.output.data(), layer0.output.size());
+            layer0.applyActivationFunction();
+            layer0.applyActivationDerivative();
 
             layer1.calculate(layer0.activation_result);
-            layer1.applyActivationFunction(layer1.output.data(), layer1.output.size());
-            layer1.applyActivationDerivative(layer1.output.data(), layer1.output.size());
+            layer1.applyActivationFunction();
+            layer1.applyActivationDerivative();
             
             layer2.calculate(layer1.activation_result);
-            layer2.applyActivationFunction(layer2.output.data(), layer2.output.size());
-            layer2.applyActivationDerivative(layer2.output.data(), layer2.output.size());
+            layer2.applyActivationFunction();
+            layer2.applyActivationDerivative();
 
             layer3.calculate(layer2.activation_result);
             std::vector<float> error = merror(layer3.output.data(), &target_y, layer3.out_width);
