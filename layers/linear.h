@@ -21,6 +21,8 @@ public:
     std::vector<float> activation_result;
     std::vector<float> activation_derivative;
     std::vector<float> error;
+    void (*activation_function)(float* __restrict matrix, float* __restrict out, size_t total_elements);
+    void (*activation_func_derivative)(float* __restrict matrix, float* __restrict out, size_t total_elements);
 
     explicit LinearLayer(size_t wi, size_t wo) : input_width(wi), out_width(wo) {
         // output width = weights height
@@ -75,5 +77,21 @@ public:
             bias[y] -= error[y] * learning_rate;
         }
         return return_val;
+    }
+
+    void setActivationFunction(void (*func)(float* __restrict matrix, float* __restrict out, size_t total_elements)) {
+        activation_function = func;
+    }
+
+    void applyActivationFunction() {
+        activation_function(output.data(), activation_result.data(), output.size());
+    }
+
+    void setActivationDerivative(void (*func)(float* __restrict matrix, float* __restrict out, size_t total_elements)) {
+        activation_func_derivative = func;
+    }
+
+    void applyActivationDerivative() {
+        activation_func_derivative(output.data(), activation_derivative.data(), output.size());
     }
 };
