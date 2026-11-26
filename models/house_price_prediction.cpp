@@ -15,6 +15,7 @@ int main() {
         {std::string_view("Iris-virginica"), 2.f},
         {std::string_view("Iris-versicolor"), 3.f}
     };
+    std::vector<float> scaling = {0.f, 1.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f}; // scaling[0] <= dataset index 0 <= scaling[1]
     const char* filename = "../dataset/Iris.csv";
     Dataset dataset = read_file(filename, lookup, 1, 1);
     dataset.cols = 5;
@@ -26,10 +27,8 @@ int main() {
     LinearLayer layer1(8,4);
     LinearLayer layer2(4,2);
     LinearLayer layer3(2,1);
-
-
     
-    size_t epochs = 1000000;
+    size_t epochs = 100000;
     float learning_rate = 0.00002;
     size_t scale = 1;
 
@@ -45,16 +44,16 @@ int main() {
             float target_y = dataset.data[pos + 4];
 
             layer0.calculate(input_vec);
-            layer0.activation_result = improved_cosa(layer0.output.data(), layer0.output.size());
-            layer0.activation_derivative = improved_deriv_cosa(layer0.output.data(), layer0.output.size());
+            layer0.activation_result = mReLU(layer0.output.data(), layer0.output.size());
+            layer0.activation_derivative = deriv_mReLU(layer0.output.data(), layer0.output.size());
 
             layer1.calculate(layer0.activation_result);
-            layer1.activation_result = improved_cosa(layer1.output.data(), layer1.output.size());
-            layer1.activation_derivative = improved_deriv_cosa(layer1.output.data(), layer1.output.size());
+            layer1.activation_result = mReLU(layer1.output.data(), layer1.output.size());
+            layer1.activation_derivative = deriv_mReLU(layer1.output.data(), layer1.output.size());
             
             layer2.calculate(layer1.activation_result);
-            layer2.activation_result = improved_cosa(layer2.output.data(), layer2.output.size());
-            layer2.activation_derivative = improved_deriv_cosa(layer2.output.data(), layer2.output.size());
+            layer2.activation_result = mReLU(layer2.output.data(), layer2.output.size());
+            layer2.activation_derivative = deriv_mReLU(layer2.output.data(), layer2.output.size());
 
             layer3.calculate(layer2.activation_result);
             std::vector<float> error = merror(layer3.output.data(), &target_y, layer2.out_width);
@@ -63,12 +62,18 @@ int main() {
             std::vector<float> layer1_delta = layer1.updateLayer(layer2_delta.data(), learning_rate);
             layer0.updateLayer(layer1_delta.data(), learning_rate);
 
-            if (e % 1000 == 0 && e != 0) {
+            if (e % 10000 == 0 && e != 0) {
                 std::cout << layer3.output[0] << "-" << dataset.data[i * 5 + 4] << "\n";
             }
-
         }
     }
+
+    std::string export_filename = "models.txt";
+    export_model<LinearLayer>(export_filename, layer0);
+    export_model<LinearLayer>(export_filename, layer1);
+    export_model<LinearLayer>(export_filename, layer2);
+    export_model<LinearLayer>(export_filename, layer3);
+
 
     /*
     for (int i = 0; i < 300; ++i) {
