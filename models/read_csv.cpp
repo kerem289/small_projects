@@ -10,23 +10,28 @@
 #include <stdexcept>
 #include "read_csv.h"
 
+
 Dataset read_file(const char* filename, std::unordered_map<std::string_view, float>& lookup, bool skip_header = false, bool skip_first_col = false) {
     Dataset data;
+    constexpr size_t FLOAT_SIZE = sizeof(float);
+
+    
     int fd = open(filename, O_RDONLY);
     struct stat sb;
     fstat(fd, &sb);
     size_t length = sb.st_size; // get total bytes
-    char* addr = static_cast<char*>(mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0));
+    char* addr = static_cast<char*>(mmap(NULL, length, PROT_READ, MAP_SHARED, fd, 0)); // memory map dataset
     if (addr == MAP_FAILED) {
         close(fd);
         throw std::invalid_argument("could not map the file");
         return data;
     }
+
     std::string_view file_view(addr, length);
     data.data.reserve(length/4);
     size_t cursor = 0;
 
-    if (skip_header && cursor < length) {
+    if (skip_header && cursor < length) { // skip header
         size_t first_newline = file_view.find('\n', cursor);
         cursor = (first_newline == std::string_view::npos) ? length : first_newline + 1;
     }
@@ -37,7 +42,7 @@ Dataset read_file(const char* filename, std::unordered_map<std::string_view, flo
             next_newline = length;
         }
         std::string_view line = file_view.substr(cursor, next_newline - cursor);
-        if (!line.empty() && line.back() == '\r') {
+        if (!line.empty() && line.back() == '\r') { // if have trailing \r
             line.remove_suffix(1);
         }
         if (line.empty()) {
@@ -79,4 +84,34 @@ Dataset read_file(const char* filename, std::unordered_map<std::string_view, flo
     munmap(addr, length);
     close(fd);
     return data;
+}
+
+
+void scale_dataset(std::vector<float>& dataset, std::vector<float>& scaling, size_t cols, size_t rows) {
+    if (!scaling.empty()) {
+        size_t total_size = cols * rows;
+        size_t count = scaling.size() / 3;
+        std::vector<float> max_values(count, 0.f);
+        std::vector<float> min_values(count, 0.f);
+        for (size_t r = 0; r < rows; ++r) {
+            for (size_t i = 0; i < count; ++i) {
+                max_values[i] = std::max(max_values[i], dataset[r * cols + i]);
+                min_values[i] = std::min(min_values[i], dataset[r * cols + i]);
+            }
+        }
+
+        for (size_t i = 0; i < count; ++i) {
+            if (max_values[i] == min_values[i]) {
+                throw std::invalid_argument("all the argument are the same for a column");
+            }
+        }
+
+        for (size_t r = 0; r < rows; ++r) {
+            for (size_t i = 0; i < count; ++i) {
+                size_t column = static_cast<size_t>(scaling[i*3]);
+                float val = dataset[r * cols + column];
+                dataset[r * cols + column] = scaling[i*3 + 1] + ((val - min_values[i])/(max_values[i] - min_values[i]) * (scaling[i*3+2] - scaling[i*3 + 1]));
+            }
+        }
+    }
 }

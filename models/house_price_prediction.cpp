@@ -15,14 +15,29 @@ int main() {
         {std::string_view("Iris-virginica"), 2.f},
         {std::string_view("Iris-versicolor"), 3.f}
     };
-    std::vector<float> scaling = {0.f, 1.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f}; // scaling[0] <= dataset index 0 <= scaling[1]
+    std::vector<float> scaling = {
+        0.f, 1.f, 3.f,
+        1.f, 0.f, 1.f,
+        2.f, 0.f, 1.f,
+        3.f, 0.f, 1.f
+    };
+    // scaling[0] indicates data index 0 scaling[1] <= dataset index 0 <= scaling[2]
+    
     const char* filename = "../dataset/Iris.csv";
     Dataset dataset = read_file(filename, lookup, 1, 1);
     dataset.cols = 5;
     dataset.rows = 150;
+    scale_dataset(dataset.data, scaling, dataset.cols, dataset.rows);
+
+    for (int i = 0; i < 10; ++i) {
+        std::cout << dataset.data[i] << "\n";
+    }
+
+    return 0;
+
 
     // every 5th one is Y
-
+    /*
     LinearLayer layer0(4,8);
     LinearLayer layer1(8,4);
     LinearLayer layer2(4,2);
@@ -48,8 +63,8 @@ int main() {
             layer0.activation_derivative = deriv_mReLU(layer0.output.data(), layer0.output.size());
 
             layer1.calculate(layer0.activation_result);
-            layer1.activation_result = mReLU(layer1.output.data(), layer1.output.size());
-            layer1.activation_derivative = deriv_mReLU(layer1.output.data(), layer1.output.size());
+            layer1.activation_result = cosa(layer1.output.data(), layer1.output.size());
+            layer1.activation_derivative = deriv_cosa(layer1.output.data(), layer1.output.size());
             
             layer2.calculate(layer1.activation_result);
             layer2.activation_result = mReLU(layer2.output.data(), layer2.output.size());
@@ -73,13 +88,6 @@ int main() {
     export_model<LinearLayer>(export_filename, layer1);
     export_model<LinearLayer>(export_filename, layer2);
     export_model<LinearLayer>(export_filename, layer3);
-
-
-    /*
-    for (int i = 0; i < 300; ++i) {
-        std::cout << f.data[i] << "\n";
-    }
-    std::cout << f.data.size() << "\n";
-    */
     return 0;
+    */
 }
