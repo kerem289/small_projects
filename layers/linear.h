@@ -58,8 +58,6 @@ public:
                 return_val[x] += weights[y * input_width + x] * delta;
 
                 weights[y * input_width + x] -= learning_rate * delta * last_input[x];
-                
-                
             }
             bias[y] -= delta * learning_rate;
         }

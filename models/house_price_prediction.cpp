@@ -6,6 +6,11 @@
 #include "../util/export_layer.h"
 #include "read_csv.h"
 
+// !!!!!! next:
+// !! either auomatically growing network
+// !! or convolutional layer
+// !! do conv layer
+
 // add weights to each element. ex: 1st element weights more than the 2nd one (scaling)
 // c++ house_price_prediction.cpp read_csv.cpp ../util/utils.cpp -o main
 
