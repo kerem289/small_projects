@@ -93,41 +93,65 @@ public:
         }
     }
 
-    std::vector<float> updateLayer(const float* __restrict incoming_err, const float learning_rate) {
-        std::vector<float> return_val(input_width * input_height * kernel_depth, 0.0f);
-        // return_val length = out_width
-        for (size_t y = 0; y < out_width; ++y) {
-            float delta = incoming_err[y] * activation_derivative[y];
-            for (size_t x = 0; x < input_width; ++x) {
-                return_val[x] += weights[y * input_width + x] * delta;
-                weights[y * input_width + x] -= learning_rate * delta * last_input[x];
+    std::vector<float> updateLayer(const float* __restrict incoming_error, const float learning_rate) {
+        std::vector<float> return_val(input_height * input_width * kernel_depth, 0.f);
+        for (size_t k = 0; k < kernels.size(); ++k) {
+            float total_error = 0.f;
+            Kernel& kernel = kernels[k];
+            std::vector<float> d_ker(kernel.ker.size(), 0.f); // Temporary gradient buffer
+            for (size_t y = 0; y < out_height; ++y) {
+                for (size_t x = 0; x < out_width; ++x) {
+                    const size_t out_idx = (y * out_width + x) * kernels.size() + k;
+                    float delta = incoming_error[out_idx] * activation_derivative[out_idx];
+                    for (size_t c = 0; c < kernel_depth; ++c) {
+                        for (size_t kernel_y = 0; kernel_y < kernel_height; ++kernel_y) {
+                            for (size_t kernel_x = 0; kernel_x < kernel_width; ++kernel_x) {
+                                const size_t src_idx = ((y + kernel_y) * input_width + (x + kernel_x)) * kernel_depth + c;
+                                const size_t kernel_idx = (kernel_y * kernel_width + kernel_x) * kernel_depth + c;
+                                return_val[src_idx] += kernel.ker[kernel_idx] * delta;
+                                d_ker[kernel_idx] += last_input_weights[src_idx] * delta;
+                            }
+                        }
+                    }
+                    total_error += delta;
+                }
             }
-            bias[y] -= delta * learning_rate;
+            kernel.bias -= total_error * learning_rate;
+            for (size_t i = 0; i < d_ker.size(); ++i) {
+                kernel.ker[i] -= d_ker[i] * learning_rate;
+            }
         }
         return return_val;
     }
 
     std::vector<float> updateLastLayer(const float* __restrict error, const float learning_rate) {
-        std::vector<float> return_val(input_width, 0.f);
+        std::vector<float> return_val(input_height * input_width * kernel_depth, 0.f);
         for (size_t k = 0; k < kernels.size(); ++k) {
-            float total_error = 0;
+            float total_error = 0.f;
             Kernel& kernel = kernels[k];
+            std::vector<float> d_ker(kernel.ker.size(), 0.f); // Temporary gradient buffer
             for (size_t y = 0; y < out_height; ++y) {
                 for (size_t x = 0; x < out_width; ++x) {
-                    float delta = error[(y * out_width + x) * kernels.size() + k];
+                    const size_t out_idx = (y * out_width + x) * kernels.size() + k;
+                    float delta = error[out_idx];
+                    
                     for (size_t c = 0; c < kernel_depth; ++c) {
                         for (size_t kernel_y = 0; kernel_y < kernel_height; ++kernel_y) {
                             for (size_t kernel_x = 0; kernel_x < kernel_width; ++kernel_x) {
                                 const size_t src_idx = ((y + kernel_y) * input_width + (x + kernel_x)) * kernel_depth + c;
-                                kernel.ker[(kernel_y * kernel_width + kernel_x) * kernel.size() + c] -= last_input_weights[src_idx] * delta * learning_rate;
+                                const size_t kernel_idx = (kernel_y * kernel_width + kernel_x) * kernel_depth + c;
+                                return_val[src_idx] += kernel.ker[kernel_idx] * delta;
+                                d_ker[kernel_idx] += last_input_weights[src_idx] * delta;
                             }
                         }
                     }
                     total_error += delta;
-                    return_val[x] += weights[y * input_width + x] * delta; // matrix multiplication
                 }
             }
             kernel.bias -= total_error * learning_rate;
+            for (size_t i = 0; i < d_ker.size(); ++i) {
+                kernel.ker[i] -= d_ker[i] * learning_rate;
+            }
         }
         
         return return_val;
@@ -148,4 +172,10 @@ public:
     void applyActivationDerivative() {
         activation_func_derivative(output.data(), activation_derivative.data(), output.size());
     }
+};
+
+
+class upConv {
+public:
+
 };

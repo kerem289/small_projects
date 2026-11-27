@@ -34,8 +34,6 @@ int main() {
     dataset.rows = 150;
     scale_dataset(dataset.data, scaling, dataset.cols, dataset.rows);
 
-
-
     // every 5th one is Y
 
     LinearLayer layer0(4,8);

@@ -71,15 +71,15 @@ int main(int argc, char** argv) {
 
     // ------ resizing part
     Image resized_image;
-    resized_image.width = static_cast<int>(image.width * 1.8f);
-    resized_image.height = static_cast<int>(image.height * 1.4f);
+    resized_image.width = static_cast<int>(image.width * 0.5f);
+    resized_image.height = static_cast<int>(image.height * 0.5f);
     resized_image.channels = 3; // rgb image
     resized_image.pixels.resize(resized_image.width * resized_image.height * resized_image.channels);
     std::cout << "starting upscaling\n";
-    upscale_rgb(image, resized_image);
+    resize_rgb(image, resized_image);
 
     std::cout << "saving the resized image\n";
-    stbi_write_png("output_resized.png", resized_image.width, resized_image.height, resized_image.channels, resized_image.pixels.data(), 0);
+    stbi_write_png("output_resized1.png", resized_image.width, resized_image.height, resized_image.channels, resized_image.pixels.data(), 0);
     std::cout << "Done.\n";
 
     return 0;
