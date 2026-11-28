@@ -17,5 +17,6 @@ struct Dataset {
 
 Dataset read_file(const char* filename, std::unordered_map<std::string_view, float>& lookup, bool skip_header, bool skip_first_col);
 void scale_dataset(std::vector<float>& dataset, std::vector<float>& scaling, size_t cols, size_t rows);
+void divide_data(std::vector<float>& dataset, std::vector<float>& dontouch, const float scaling, size_t cols, size_t rows);
 
 #endif

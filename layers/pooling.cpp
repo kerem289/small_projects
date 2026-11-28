@@ -49,7 +49,6 @@ void averagepool(const float* __restrict data, float* __restrict output, const s
             for (size_t c = 0; c < depth; ++c) {
                 out_pixel[c] = 0;
             }
-            size_t valid_count = 0;
             for (size_t ky = 0; ky < kernel; ++ky) {
                 if (y + ky < padding || y + ky >= input_height + padding) {
                     continue;
@@ -59,19 +58,20 @@ void averagepool(const float* __restrict data, float* __restrict output, const s
                         continue;
                     }
                     const float* in_pixel = data + ((y + ky - padding) * input_width + (x + kx - padding)) * depth;
-                    ++valid_count;
                     for (size_t c = 0; c < depth; ++c) {
                         out_pixel[c] += in_pixel[c];
                     }
                 }
             }
-            const size_t denom = count_include_pad ? (kernel * kernel) : valid_count;
-            if (denom > 0) {
-                const float inv_denom = 1.0f / static_cast<float>(denom);
-                for (size_t c = 0; c < depth; ++c) {
-                    out_pixel[c] *= inv_denom;
-                }
+            const float inv_denom = 1.0f / static_cast<float>(kernel * kernel);
+            for (size_t c = 0; c < depth; ++c) {
+                out_pixel[c] *= inv_denom;
             }
         }
     }
 }
+
+
+void deriv_maxpool();
+
+void deriv_averagepool;

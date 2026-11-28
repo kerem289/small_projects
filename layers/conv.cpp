@@ -27,12 +27,15 @@ int main() {
 
     dataset.cols = 785;
     dataset.rows = 60000;
+    std::vector<float> dont = {0};
+    divide_data(dataset.data, dont, 255.f, dataset.cols, dataset.rows);
     
-    mConv conv0(3, 3, 1,  28, 28, 2);
-    mConv conv1(3, 3, 2,  26, 26, 4);
-    mConv conv2(7, 7, 4,  24, 24, 16);
-    LinearLayer layer1(4, 16);
-    LinearLayer layer2(16, 32);
+    mConv conv0(3, 3, 1, 28, 28, 4);
+    mConv conv1(3, 3, 4, 26, 26, 2);
+    mConv conv2(3, 3, 2, 24, 24, 1);
+    LinearLayer layer1(484, 288);
+    LinearLayer layer2(288, 144);
+    LinearLayer layer3(144, 10);
 
 
     conv0.setActivationFunction(mReLU);
@@ -41,20 +44,8 @@ int main() {
     conv1.setActivationFunction(mReLU);
     conv1.setActivationDerivative(deriv_mReLU);
 
-    conv2.setActivationFunction(improved_cosa);
-    conv2.setActivationDerivative(improved_deriv_cosa);
-
-    conv3.setActivationFunction(mReLU);
-    conv3.setActivationDerivative(deriv_mReLU);
-
-    conv4.setActivationFunction(mReLU);
-    conv4.setActivationDerivative(deriv_mReLU);
-
-    conv5.setActivationFunction(mReLU);
-    conv5.setActivationDerivative(deriv_mReLU);
-
-    conv6.setActivationFunction(improved_cosa);    
-    conv6.setActivationDerivative(improved_deriv_cosa);
+    conv2.setActivationFunction(mReLU);
+    conv2.setActivationDerivative(deriv_mReLU);
 
     layer1.setActivationFunction(mReLU);
     layer1.setActivationDerivative(deriv_mReLU);
@@ -62,17 +53,16 @@ int main() {
     layer2.setActivationFunction(mReLU);
     layer2.setActivationDerivative(deriv_mReLU);
 
-    layer3.setActivationFunction(mReLU);
-    layer3.setActivationDerivative(deriv_mReLU);
-
-    size_t epochs = 3000;
-    float learning_rate = 0.00002;
+    size_t epochs = 100;
+    float learning_rate = 0.0001;
     std::cout << "starting" << "\n";
     
     for (size_t e = 0; e < epochs; ++e) {
         for (size_t i = 0; i < dataset.rows; ++i) {
             size_t pos = i * dataset.cols; // dataset has 29 columns (first being actual data and the rest being the image)
             float target_y = dataset.data[pos];
+            std::vector<float> actual_data(10, 0.f);
+            actual_data[target_y] = 1;
             std::vector<float>::const_iterator first = dataset.data.begin() + pos + 1;
             std::vector<float>::const_iterator last = dataset.data.begin() + pos + 785;
             std::vector<float> input_vec(first, last);
@@ -89,23 +79,7 @@ int main() {
             conv2.applyActivationFunction();
             conv2.applyActivationDerivative();
 
-            conv3.calculate(conv2.activation_result);
-            conv3.applyActivationFunction();
-            conv3.applyActivationDerivative();
-
-            conv4.calculate(conv3.activation_result);
-            conv4.applyActivationFunction();
-            conv4.applyActivationDerivative();
-
-            conv5.calculate(conv4.activation_result);
-            conv5.applyActivationFunction();
-            conv5.applyActivationDerivative();
-
-            conv6.calculate(conv5.activation_result);
-            conv6.applyActivationFunction();
-            conv6.applyActivationDerivative();
-
-            layer1.calculate(conv6.activation_result);
+            layer1.calculate(conv2.activation_result);
             layer1.applyActivationFunction();
             layer1.applyActivationDerivative();
 
@@ -114,30 +88,28 @@ int main() {
             layer2.applyActivationDerivative();
 
             layer3.calculate(layer2.activation_result);
-            layer3.applyActivationFunction();
-            layer3.applyActivationDerivative();
 
-            layer4.calculate(layer3.activation_result);
-            std::vector<float> delta1;
-            std::vector<float> delta2;
-            std::vector<float> error = merror(layer4.output.data(), &target_y, layer4.out_width); // do not make new array every time. Improve this
-            layer4.updateLastLayer(error.data(), learning_rate);
-            layer3.updateLayer(layer4.delta0.data(), learning_rate);
-            layer2.updateLayer(layer3.delta0.data(), learning_rate);
+            std::vector<float> error = merror(layer3.output.data(), actual_data.data(), layer3.out_width);
+            layer3.updateLastLayer(error.data(), learning_rate);
+            layer2.updateLastLayer(layer3.delta0.data(), learning_rate);
             layer1.updateLayer(layer2.delta0.data(), learning_rate);
 
-            conv6.updateLayer(layer1.delta0.data(), learning_rate);
-            conv5.updateLayer(conv6.delta0.data(), learning_rate);
-            conv4.updateLayer(conv5.delta0.data(), learning_rate);
-            conv3.updateLayer(conv4.delta0.data(), learning_rate);
-            conv2.updateLayer(conv3.delta0.data(), learning_rate);
+            conv2.updateLayer(layer1.delta0.data(), learning_rate);
             conv1.updateLayer(conv2.delta0.data(), learning_rate);
             conv0.updateLayer(conv1.delta0.data(), learning_rate);
-
-            if (e % 10 == 0 && e != 0) {
-                std::cout << layer4.output[0] << "-" << target_y << "\n";
+            
+            if (i % 5000 == 0 && e != 0) {
+                for (int q = 0; q < 10; ++q) {
+                    std::cout << layer3.output[q] << "-" << actual_data[q] << "\n";
+                }
+                std::cout << "\n";
             }
-
+            if (i % 800 == 0) {
+                learning_rate -= 0.0000001;
+                if (learning_rate < 0.000001) {
+                    learning_rate = 0.000001;
+                }
+            }
         }
     }
 

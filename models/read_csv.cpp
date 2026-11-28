@@ -122,3 +122,22 @@ void scale_dataset(std::vector<float>& dataset, std::vector<float>& scaling, siz
         }
     }
 }
+
+void divide_data(std::vector<float>& dataset, std::vector<float>& dontouch, const float scaling, size_t cols, size_t rows) {
+    if (rows == 0 || cols == 0 || dataset.size() != cols * rows) {
+        throw std::invalid_argument("Dataset dimensions do not match cols * rows");
+    }
+    // dontouch includes columns that we dont want to touch
+    // dontouch is in ascending order
+    for (size_t r = 0; r < rows; ++r) {
+        size_t doindex = 0;
+        const size_t row_offset = r * cols;
+        for (size_t c = 0; c < cols; ++c) {
+            if (doindex < dontouch.size() && dontouch[doindex] == c) {
+                ++doindex;
+                continue;
+            }
+            dataset[row_offset + c] /= scaling;
+        }
+    }
+}

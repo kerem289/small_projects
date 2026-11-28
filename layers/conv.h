@@ -21,7 +21,7 @@ struct Kernel {
     size_t height;
     size_t depth;
     std::vector<float> ker;
-    float bias;
+    float bias = 0.0f;
 
     Kernel(size_t w, size_t h, size_t d) : width(w), height(h), depth(d) {
         ker.resize(width * height * depth);
@@ -40,6 +40,8 @@ public:
     size_t out_width;
     size_t out_height;
     size_t out_size;
+    size_t stride;
+    size_t padding;
     std::vector<Kernel> kernels;
     std::vector<float> output;
     std::vector<float> last_input_weights;
@@ -71,6 +73,13 @@ public:
         error.resize(out_size);
         delta0.resize(input_height * input_width * kernel_depth, 0.f);
         d_ker.resize(kernel_width * kernel_height * kernel_depth, 0.f);
+        stride = 1;
+        padding = 0;
+    }
+
+    void setStridePadding(size_t st, size_t pd) {
+        stride = st;
+        padding = pd;
     }
 
     void generateKernel() {

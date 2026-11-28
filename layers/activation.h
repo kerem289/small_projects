@@ -7,7 +7,7 @@
 
 inline void mReLU(float* __restrict matrix, float* __restrict out, size_t total_elements) {
     for (size_t i = 0; i < total_elements; ++i) {
-        out[i] = std::max(-0.1f * matrix[i], matrix[i]);
+        out[i] = (matrix[i] > 0.0f) ? matrix[i] : 0.1f * matrix[i];
     }
 }
 

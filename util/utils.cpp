@@ -27,7 +27,7 @@ void multiplyRowMatrix(const float* __restrict row_vector, const float* __restri
 void generateRandomValues(std::vector<float>& input_vector) {
     std::random_device rd;
     std::mt19937 engine(rd());
-    std::uniform_real_distribution<float> dist(0.f, 1.f);
+    std::uniform_real_distribution<float> dist(-0.15f, 0.15f);
     for (auto& v : input_vector) v = dist(engine);
 }
 
