@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
 
     // ------ resizing part
     Image resized_image;
-    resized_image.width = static_cast<int>(image.width * 0.5f);
-    resized_image.height = static_cast<int>(image.height * 0.5f);
+    resized_image.width = static_cast<int>(image.width * 1.5f);
+    resized_image.height = static_cast<int>(image.height * 1.5f);
     resized_image.channels = 3; // rgb image
     resized_image.pixels.resize(resized_image.width * resized_image.height * resized_image.channels);
     std::cout << "starting upscaling\n";

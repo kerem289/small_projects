@@ -66,76 +66,58 @@ void upscale_rgb(Image& source, Image& destination) {
     }
 }
 
-void resize_rgb(Image& source, Image& destination) {
+void resize_rgb(const Image& source, Image& destination) {
     if (source.channels != 3) {
         throw std::invalid_argument("image is not rgb");
     }
-
     if (source.width <= 0 || source.height <= 0 || destination.width <= 0 || destination.height <= 0) {
         throw std::invalid_argument("the image should contain at least one pixel");
     }
-
     if (source.width == destination.width && source.height == destination.height) {
         destination.pixels = source.pixels;
         return;
     }
 
-    float scale_width = static_cast<float>(destination.width) / source.width;
-    float scale_height = static_cast<float>(destination.height) / source.height;
+    const uint8_t* __restrict src_ptr = source.pixels.data();
+    uint8_t* __restrict dst_ptr = destination.pixels.data();
 
-    unsigned char* __restrict destination_ptr = destination.pixels.data();
-    unsigned char* __restrict source_ptr = source.pixels.data();
+    const float scale_x = static_cast<float>(source.width) / destination.width;
+    const float scale_y = static_cast<float>(source.height) / destination.height;
 
-    int scale_wi;
-    int scale_hi;
-    float scale_hf;
-    float scale_wf;
+    for (int y = 0; y < destination.height; ++y) {
+        float src_y = (y + 0.5f) * scale_y - 0.5f;
+        int y0 = static_cast<int>(std::floor(src_y));
+        int y1 = y0 + 1;
+        float wy = src_y - y0;
 
-    if (scale_width <= 1) {
-        scale_wi = static_cast<int>(std::ceil(1/scale_width));
-        scale_wf = scale_width;
-    } else {
-        scale_wi = 1;
-        scale_wf = scale_width;
-    }
-    // 0.25 -> 4
-    if (scale_height <= 1) {
-        scale_hi = static_cast<int>(std::ceil(1/scale_height));
-        scale_hf = scale_height;
-    } else {
-        scale_hi = 1;
-        scale_hf = scale_height;
-    }
+        y0 = std::clamp(y0, 0, source.height - 1);
+        y1 = std::clamp(y1, 0, source.height - 1);
 
-    uint16_t total_values = (2 * scale_hi + 1) * (2 * scale_wi + 1) - 1;
-    ColorType color;
-    for (size_t y = 0; y < destination.height; ++y) {
-        for (size_t x = 0; x < destination.width; ++x) {
-            uint32_t r_sum = 0;
-            uint32_t g_sum = 0;
-            uint32_t b_sum = 0;
-            int source_x = clamp(static_cast<int>(std::round(x / scale_wf)), 0, source.width - 1);
-            int source_y = clamp(static_cast<int>(std::round(y / scale_hf)), 0, source.height - 1);
-            int base_index = (y * destination.width + x) * destination.channels;
-            int source_base_index = (source_y * source.width + source_x) * source.channels;
+        for (int x = 0; x < destination.width; ++x) {
+            float src_x = (x + 0.5f) * scale_x - 0.5f;
+            int x0 = static_cast<int>(std::floor(src_x));
+            int x1 = x0 + 1;
+            float wx = src_x - x0;
 
-            for (int ky = -scale_hi; ky <= scale_hi; ++ky) {
-                for (int kx = -scale_wi; kx <= scale_wi; ++kx) {
-                    if (kx == 0 && ky == 0) continue;
-                    int neighbor_x = clamp(source_x + kx, 0, source.width - 1);
-                    int neighbor_y = clamp(source_y + ky, 0, source.height - 1);
+            x0 = std::clamp(x0, 0, source.width - 1);
+            x1 = std::clamp(x1, 0, source.width - 1);
 
-                    source.getPixelRgb(neighbor_x, neighbor_y, color);
-                    RGB pixel = color.rgb;
+            const uint8_t* p00 = src_ptr + (y0 * source.width + x0) * 3;
+            const uint8_t* p10 = src_ptr + (y0 * source.width + x1) * 3;
+            const uint8_t* p01 = src_ptr + (y1 * source.width + x0) * 3;
+            const uint8_t* p11 = src_ptr + (y1 * source.width + x1) * 3;
 
-                    r_sum += pixel.r;
-                    g_sum += pixel.g;
-                    b_sum += pixel.b;
-                }
+            // Bilinear weights
+            float w00 = (1.0f - wx) * (1.0f - wy);
+            float w10 = wx * (1.0f - wy);
+            float w01 = (1.0f - wx) * wy;
+            float w11 = wx * wy;
+
+            int dst_idx = (y * destination.width + x) * 3;
+            for (int c = 0; c < 3; ++c) {
+                float val = w00 * p00[c] + w10 * p10[c] + w01 * p01[c] + w11 * p11[c];
+                dst_ptr[dst_idx + c] = static_cast<uint8_t>(val + 0.5f);
             }
-            destination_ptr[base_index] = static_cast<uint8_t>(static_cast<float>(r_sum)/total_values * OTHER_POINT_WEIGHT + MAIN_POINT_WEIGHT * source_ptr[source_base_index]);
-            destination_ptr[base_index+1] = static_cast<uint8_t>(static_cast<float>(g_sum)/total_values * OTHER_POINT_WEIGHT + MAIN_POINT_WEIGHT * source_ptr[source_base_index+1]);
-            destination_ptr[base_index+2] = static_cast<uint8_t>(static_cast<float>(b_sum)/total_values * OTHER_POINT_WEIGHT + MAIN_POINT_WEIGHT * source_ptr[source_base_index+2]);
         }
     }
 }
