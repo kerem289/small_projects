@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <functional>
 
-#define DEFAULT_LOOKUP {"hohohoho", 1.f}
+#define DEFAULT_LOOKUP {{"hohohoho", 1.f}}
 #define DEFAULT_SCALING {}
 
 struct Dataset {

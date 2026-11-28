@@ -21,6 +21,7 @@ public:
     std::vector<float> activation_result;
     std::vector<float> activation_derivative;
     std::vector<float> error;
+    std::vector<float> delta0;
     void (*activation_function)(float* __restrict matrix, float* __restrict out, size_t total_elements);
     void (*activation_func_derivative)(float* __restrict matrix, float* __restrict out, size_t total_elements);
 
@@ -35,6 +36,7 @@ public:
         activation_result.resize(wo);
         activation_derivative.resize(wo);
         error.resize(wo);
+        delta0.resize(input_width, 0.f);
 
         generateRandomValues(weights);
         generateRandomValues(bias);
@@ -49,32 +51,30 @@ public:
         }
     }
 
-    std::vector<float> updateLayer(const float* __restrict incoming_err, const float learning_rate) {
-        std::vector<float> return_val(input_width, 0.0f);
+    void updateLayer(const float* __restrict incoming_err, const float learning_rate) {
+        std::fill(delta0.begin(), delta0.end(), 0);
         // return_val length = out_width
         for (size_t y = 0; y < out_width; ++y) {
             float delta = incoming_err[y] * activation_derivative[y];
             for (size_t x = 0; x < input_width; ++x) {
-                return_val[x] += weights[y * input_width + x] * delta;
+                delta0[x] += weights[y * input_width + x] * delta;
 
                 weights[y * input_width + x] -= learning_rate * delta * last_input[x];
             }
             bias[y] -= delta * learning_rate;
         }
-        return return_val;
     }
 
-    std::vector<float> updateLastLayer(const float* __restrict error, const float learning_rate) {
-        std::vector<float> return_val(input_width, 0.f);
+    void updateLastLayer(const float* __restrict error, const float learning_rate) {
+        std::fill(delta0.begin(), delta0.end(), 0);
         for (size_t y = 0; y < out_width; ++y) {
             float delta = error[y];
             for (size_t x = 0; x < input_width; ++x) {
-                return_val[x] += weights[y * input_width + x] * delta; // matrix multiplication
+                delta0[x] += weights[y * input_width + x] * delta; // matrix multiplication
                 weights[y * input_width + x] -= error[y] * learning_rate * last_input[x];
             }
             bias[y] -= error[y] * learning_rate;
         }
-        return return_val;
     }
 
     void setActivationFunction(void (*func)(float* __restrict matrix, float* __restrict out, size_t total_elements)) {
